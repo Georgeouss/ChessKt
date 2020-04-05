@@ -3,6 +3,8 @@ package pieces
 import board.Board
 import game.Game
 import game.Move
+import utils.Constants.PieceInitialPosition.BLACK_KING_ROW
+import utils.Constants.PieceInitialPosition.WHITE_KING_ROW
 import java.awt.Cursor
 import java.awt.Graphics2D
 import java.awt.Point
@@ -22,31 +24,24 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     }
 
     override fun isValidMove(move: Point): Boolean {
-        val dir = if (alliance == Alliance.White) -1 else 1
-        val backrank = if (alliance == Alliance.White) 6 else 1
-        val diff = Point(move.x - x, move.y - y)
-        val tilePiece = game.board.getPiece(move.x, move.y)
-        val isCapture = (diff.x == 1 || diff.x == -1) && diff.y == dir
+        val dir = if (alliance == Alliance.WHITE) -1 else 1
+        val backrank = alliance.getPawnRowIndex()
+        val difference = getMoveDifference(move)
+        val tilePiece = getTilePiece(move)
+        val isCapture = (difference.x == 1 || difference.x == -1) && difference.y == dir
 
         val enPassant = isValidEnPassant(move)
 
-        var valid = (diff.x == 0 && tilePiece == null && (diff.y == dir || (diff.y == 2 * dir && y == backrank)))
-                || isCapture && (enPassant || (tilePiece != null && tilePiece.alliance != this.alliance))
+        var isValidMove =
+            (difference.x == 0 && tilePiece == null && (difference.y == dir || (difference.y == 2 * dir && y == backrank)))
+                    || isCapture && (enPassant || (tilePiece != null && tilePiece.alliance != this.alliance))
 
-        // Check if king is in check after move
-        if(valid) {
-            val king = if (alliance == Alliance.White) game.board.whiteKing else game.board.blackKing
-            val takeBack = this.testMove(move)
-            valid = !king.inCheck()
-            takeBack()
-        }
-
-        return valid
+        return isValidMove && isInCheckAfterMove(move)
     }
 
-    // Overridden because of position spesific rules
+    // Overridden because of position specific rules
     override fun move(move: Point) {
-        val backrank = if (alliance == Alliance.White) 0 else 7
+        val backrank = if (alliance == Alliance.WHITE) BLACK_KING_ROW else WHITE_KING_ROW
         val valid = this.isValidMove(move)
 
         if (valid && move.y == backrank) {
@@ -74,7 +69,7 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     }
 
     override fun getValidMoves(): Array<Point> {
-        val dir = if (alliance == Alliance.White) -1 else 1
+        val dir = if (alliance == Alliance.WHITE) -1 else 1
 
         return arrayOf(
             Point(x, y + 1 * dir),
@@ -85,7 +80,7 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     }
 
     override fun getCoveredSquares(): Array<Point> {
-        val dir = if (alliance == Alliance.White) -1 else 1
+        val dir = if (alliance == Alliance.WHITE) -1 else 1
         return arrayOf(
             Point(x + 1, y + dir),
             Point(x - 1, y + dir)
@@ -96,7 +91,7 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
         if (game.moves.size == 0) return false
 
         val diff = Point(move.x - x, move.y - y)
-        val dir = if (alliance == Alliance.White) -1 else 1
+        val dir = if (alliance == Alliance.WHITE) -1 else 1
 
         if (abs(diff.x) == 1 && diff.y == dir) {
             val capturee = game.board.getPiece(x + diff.x, y)
@@ -104,7 +99,7 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
             val lastMoveDiff = Point(lastMove.dx - lastMove.x, lastMove.dy - lastMove.y)
 
             if (
-                capturee != null && capturee::class == Pawn::class && capturee.alliance != this.alliance
+                capturee != null && capturee is Pawn && capturee.alliance != this.alliance
                 && lastMove.piece == capturee && abs(lastMoveDiff.y) == 2
             ) {
                 return true

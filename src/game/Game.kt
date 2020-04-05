@@ -22,7 +22,7 @@ class Game(title: String) : Canvas(), Runnable {
     public var overlayed = false
 
     public val moves = ArrayList<Move>()
-    public var turn = Alliance.White
+    public var turn = Alliance.WHITE
 
     public fun start(window: Window) {
         board = Board(this, window.width / 8)
@@ -82,8 +82,8 @@ class Game(title: String) : Canvas(), Runnable {
         this.moves.add(move)
 
         turn = when(turn) {
-            Alliance.White -> Alliance.Black
-            Alliance.Black -> Alliance.White
+            Alliance.WHITE -> Alliance.BLACK
+            Alliance.BLACK -> Alliance.WHITE
         }
 
         board.alertMoveAdded(move)

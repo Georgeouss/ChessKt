@@ -12,24 +12,20 @@ class King(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     private var hasMoved = false
 
     override fun isValidMove(move: Point): Boolean {
-        val bounds = Rectangle(0, 0, 8, 8)
-        val diff = Point(move.x - x, move.y - y)
-        val tilePiece = game.board.getPiece(move.x, move.y)
+        val difference = getMoveDifference(move)
+        val tilePiece = getTilePiece(move)
         val checked = inCheck(move)
 
-        return bounds.contains(
-            move.x,
-            move.y
-        ) && !checked && (tilePiece == null || tilePiece.alliance != this.alliance) &&
-                (abs(diff.x) + abs(diff.y) == 1 || (abs(diff.x) == abs(diff.y) && abs(diff.y) == 1))
+        return isMoveInBounds(move) && !checked && (tilePiece == null || tilePiece.alliance != this.alliance) &&
+                (abs(difference.x) + abs(difference.y) == 1 || (abs(difference.x) == abs(difference.y) && abs(difference.y) == 1))
                 || isValidCastleMove(move)
     }
 
     private fun isValidCastleMove(move: Point): Boolean {
-        val diff = Point(move.x - x, move.y - y)
+        val difference = getMoveDifference(move)
 
-        return if (!inCheck() && abs(diff.x) == 2 && diff.y == 0) {
-            val dir = diff.x / abs(diff.x)
+        return if (!inCheck() && abs(difference.x) == 2 && difference.y == 0) {
+            val dir = difference.x / abs(difference.x)
             val long = dir == -1
             val length = if (long) 3 else 2
 
@@ -39,11 +35,11 @@ class King(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
                         && !inCheck(x + it, y)
             }
             val cornerPiece = game.board.getPiece(x + (length * dir) + dir, y)
-            val rookInCorner = cornerPiece != null && cornerPiece::class == Rook::class
+            val rookInCorner = cornerPiece != null && (cornerPiece is Rook)
 
             !hasMoved && pathClear && rookInCorner
         } else {
-            return false
+            false
         }
     }
 
@@ -104,21 +100,9 @@ class King(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     }
 
     override fun getValidMoves(): Array<Point> {
-        return arrayOf(
-            Point(x - 1, y - 1),
-            Point(x + 0, y - 1),
-            Point(x + 1, y - 1),
-            Point(x - 1, y + 0),
-            Point(x + 1, y + 0),
-            Point(x - 1, y + 1),
-            Point(x + 0, y + 1),
-            Point(x + 1, y + 1),
-
-            // Castling moves
-            Point(x + 2, y + 0),
-            Point(x - 2, y + 0)
-
-        ).filter(::isValidMove).toTypedArray()
+        val castingMoves = arrayOf(Point(x + 2, y + 0), Point(x - 2, y + 0))
+        return getCoveredSquares().plus(castingMoves)
+            .filter(::isValidMove).toTypedArray()
     }
 
     override fun getCoveredSquares(): Array<Point> {

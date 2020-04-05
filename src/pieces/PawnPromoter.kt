@@ -1,6 +1,6 @@
 package pieces
 
-import Utils.loadImage
+import utils.loadImage
 import game.Game
 import game.MouseEventType
 import java.awt.*
@@ -14,7 +14,7 @@ class PawnPromoter(x: Int, y: Int, alliance: Alliance, private val game: Game) {
 
     private var visible = false;
 
-    private val dir = if (alliance == Alliance.White) 1 else -1
+    private val dir = if (alliance == Alliance.WHITE) 1 else -1
 
     private val queenRect =
         Rectangle(x * game.board.tileSize, (y + 0 * dir) * game.board.tileSize, game.board.tileSize, game.board.tileSize)

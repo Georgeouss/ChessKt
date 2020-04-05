@@ -2,6 +2,10 @@ package pieces
 
 import board.Board
 import game.Game
+import utils.Direction
+import utils.Directions
+import utils.Horizontal
+import utils.Vertical
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.math.abs
@@ -10,7 +14,6 @@ class Rook(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     Piece(x, y, alliance, game, board, "${alliance.string}-Rook") {
 
     override fun isValidMove(move: Point): Boolean {
-        val bounds = Rectangle(0, 0, 8, 8)
         val diff = Point(move.x - x, move.y - y)
         val tilePiece = game.board.getPiece(move.x, move.y)
 
@@ -23,18 +26,10 @@ class Rook(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
             else -> null
         }
 
-        var valid = bounds.contains(move.x, move.y) && (isHorizontal || isVertical) &&
+        var isValid = isMoveInBounds(move) && (isHorizontal || isVertical) &&
                 pathEmpty(move, direction!!.obj) && (tilePiece == null || tilePiece.alliance != this.alliance)
 
-        // Check if king is in check after move
-        if(valid) {
-            val king = if (alliance == Alliance.White) game.board.whiteKing else game.board.blackKing
-            val takeBack = this.testMove(move)
-            valid = !king.inCheck()
-            takeBack()
-        }
-
-        return valid
+      return isValid && isInCheckAfterMove(move)
     }
 
     private fun pathEmpty(move: Point, direction: Direction, ignoreEnemyKing: Boolean = false): Boolean {
@@ -43,7 +38,7 @@ class Rook(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
 
             if (
                 tilePiece != null &&
-                !(ignoreEnemyKing && tilePiece::class == King::class && tilePiece.alliance != this.alliance))
+                !(ignoreEnemyKing && tilePiece is King && tilePiece.alliance != this.alliance))
             {
                 return false
             }

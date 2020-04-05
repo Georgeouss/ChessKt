@@ -2,6 +2,7 @@ package pieces
 
 import board.Board
 import game.Game
+import utils.*
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.math.abs
@@ -10,9 +11,8 @@ class Queen(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     Piece(x, y, alliance, game, board, "${alliance.string}-Queen") {
 
     override fun isValidMove(move: Point): Boolean {
-        val bounds = Rectangle(0, 0, 8, 8)
-        val diff = Point(move.x - x, move.y - y)
-        val tilePiece = game.board.getPiece(move.x, move.y)
+        val diff = getMoveDifference(move)
+        val tilePiece = getTilePiece(move)
 
         val isDiagonal = abs(diff.x) == abs(diff.y)
         val isHorizontal = diff.y == 0 && abs(diff.x) > 0
@@ -25,18 +25,10 @@ class Queen(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
             else -> null
         }
 
-        var valid = bounds.contains(move.x, move.y) && (isDiagonal || isHorizontal || isVertical) &&
+        val isValid = isMoveInBounds(move) && (isDiagonal || isHorizontal || isVertical) &&
                 pathEmpty(move, direction!!.obj) && (tilePiece == null || tilePiece.alliance != this.alliance)
 
-        // Check if king is in check after move
-        if(valid) {
-            val king = if (alliance == Alliance.White) game.board.whiteKing else game.board.blackKing
-            val takeBack = this.testMove(move)
-            valid = !king.inCheck()
-            takeBack()
-        }
-
-        return valid
+        return isValid && isInCheckAfterMove(move)
     }
 
     override fun getValidMoves(): Array<Point> {

@@ -1,10 +1,11 @@
 package pieces
 
-import Utils.loadImage
 import board.Board
 import game.Game
 import game.MouseEventType
 import game.Move
+import utils.Constants.BOARD_TILES_SIZE
+import utils.loadImage
 import java.awt.*
 import kotlin.math.roundToInt
 
@@ -139,7 +140,7 @@ abstract class Piece(
                         game.mouse.isDown = false
                         game.mouse.selected = null
 
-                        if(game.turn == this.alliance)
+                        if (game.turn == this.alliance)
                             move(renderTile.x, renderTile.y)
 
                         renderX = x * ts
@@ -159,5 +160,24 @@ abstract class Piece(
             renderX = x * ts
             renderY = y * ts
         }
+    }
+
+    fun isMoveInBounds(move: Move): Boolean {
+        return Rectangle(0, 0, BOARD_TILES_SIZE, BOARD_TILES_SIZE)
+            .contains(move.x, move.y)
+    }
+
+    fun getMoveDifference(move: Move): Point {
+        return Point(move.x - x, move.y - y)
+    }
+
+    fun getTilePiece(move: Move) = game.board.getPiece(move.x, move.y)
+
+    fun isInCheckAfterMove(move: Move): Boolean {
+        val king = if (alliance == Alliance.WHITE) game.board.whiteKing else game.board.blackKing
+        val takeBack = this.testMove(move)
+        val result = king.inCheck()
+        takeBack()
+        return result
     }
 }
