@@ -2,20 +2,19 @@ package pieces
 
 import board.Board
 import game.Game
-import utils.Direction
+import utils.DirectionMovable
 import utils.Directions
 import utils.Horizontal
 import utils.Vertical
 import java.awt.Point
-import java.awt.Rectangle
 import kotlin.math.abs
 
 class Rook(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     Piece(x, y, alliance, game, board, "${alliance.string}-Rook") {
 
-    override fun isValidMove(move: Point): Boolean {
-        val diff = Point(move.x - x, move.y - y)
-        val tilePiece = game.board.getPiece(move.x, move.y)
+    override fun isValidMove(pointToMove: Point): Boolean {
+        val diff = Point(pointToMove.x - x, pointToMove.y - y)
+        val tilePiece = game.board.getPiece(pointToMove.x, pointToMove.y)
 
         val isHorizontal = diff.y == 0 && abs(diff.x) > 0
         val isVertical = diff.x == 0 && abs(diff.y) > 0
@@ -26,25 +25,14 @@ class Rook(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
             else -> null
         }
 
-        var isValid = isMoveInBounds(move) && (isHorizontal || isVertical) &&
-                pathEmpty(move, direction!!.obj) && (tilePiece == null || tilePiece.alliance != this.alliance)
+        val isValid = isMoveInBounds(pointToMove) && (isHorizontal || isVertical) &&
+                isPathEmpty(pointToMove, direction!!.obj) && (tilePiece == null || tilePiece.alliance != this.alliance)
 
-      return isValid && isInCheckAfterMove(move)
+        return isValid && isInCheckAfterMove(pointToMove)
     }
 
-    private fun pathEmpty(move: Point, direction: Direction, ignoreEnemyKing: Boolean = false): Boolean {
-        for (tile in direction.generateInBetween(x, y, move.x, move.y)) {
-            val tilePiece = game.board.getPiece(tile.x, tile.y)
-
-            if (
-                tilePiece != null &&
-                !(ignoreEnemyKing && tilePiece is King && tilePiece.alliance != this.alliance))
-            {
-                return false
-            }
-        }
-
-        return true
+    private fun isPathEmpty(move: Point, directionMovable: DirectionMovable): Boolean {
+        return directionMovable.isPathEmpty(Point(x, y), move, game)
     }
 
     override fun getValidMoves(): Array<Point> {
@@ -55,10 +43,8 @@ class Rook(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
     }
 
     override fun getCoveredSquares(): Array<Point> {
-        val horizontal =
-            Horizontal.generateAll(x, y).filter { pathEmpty(it, Directions.Horizontal.obj, ignoreEnemyKing=true) }.toTypedArray()
-        val vertical =
-            Vertical.generateAll(x, y).filter { pathEmpty(it, Directions.Vertical.obj, ignoreEnemyKing=true) }.toTypedArray()
+        val horizontal = Horizontal.getCoveredSquares(Point(x, y), game, alliance)
+        val vertical = Vertical.getCoveredSquares(Point(x, y), game, alliance)
 
         return arrayOf(*horizontal, *vertical)
     }

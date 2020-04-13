@@ -23,48 +23,32 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
         }
     }
 
-    override fun isValidMove(move: Point): Boolean {
-        val dir = if (alliance == Alliance.WHITE) -1 else 1
-        val backrank = alliance.getPawnRowIndex()
-        val difference = getMoveDifference(move)
-        val tilePiece = getTilePiece(move)
-        val isCapture = (difference.x == 1 || difference.x == -1) && difference.y == dir
-
-        val enPassant = isValidEnPassant(move)
-
-        var isValidMove =
-            (difference.x == 0 && tilePiece == null && (difference.y == dir || (difference.y == 2 * dir && y == backrank)))
-                    || isCapture && (enPassant || (tilePiece != null && tilePiece.alliance != this.alliance))
-
-        return isValidMove && isInCheckAfterMove(move)
-    }
-
     // Overridden because of position specific rules
-    override fun move(move: Point) {
+    override fun makeMove(destination: Point) {
         val backrank = if (alliance == Alliance.WHITE) BLACK_KING_ROW else WHITE_KING_ROW
-        val valid = this.isValidMove(move)
+        val isValid = this.isValidMove(destination)
 
-        if (valid && move.y == backrank) {
+        if (isValid && destination.y == backrank) {
             game.cursor = Cursor(Cursor.DEFAULT_CURSOR)
 
-            this.promoter = PawnPromoter(move.x, move.y, alliance, game)
+            this.promoter = PawnPromoter(destination.x, destination.y, alliance, game)
 
             promoter!!.choose { promotion: PawnPromoter.Promotion ->
-                val piece = pieceFrom(promotion, move.x, move.y)
+                val piece = pieceFrom(promotion, destination.x, destination.y)
 
                 game.board.setPiece(x, y, null)
 
                 game.mouse.isDown = false
                 game.mouse.selected = null
 
-                game.board.setPiece(move, piece)
+                game.board.setPiece(destination, piece)
 
-                game.addMove(Move(x, y, move.x, move.y, piece))
+                game.addMove(Move(x, y, destination.x, destination.y, piece))
             }
-        } else if (valid && isValidEnPassant(move)) {
-            this.enPassant(move)
-        } else if (valid) {
-            super.move(move)
+        } else if (isValid && isValidEnPassant(destination)) {
+            this.enPassant(destination)
+        } else if (isValid) {
+            super.makeMove(destination)
         }
     }
 
@@ -77,6 +61,22 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
             Point(x + 1, y + 1 * dir),
             Point(x - 1, y + 1 * dir)
         ).filter(::isValidMove).toTypedArray()
+    }
+
+    override fun isValidMove(pointToMove: Point): Boolean {
+        val dir = if (alliance == Alliance.WHITE) -1 else 1
+        val backrank = alliance.getPawnRowIndex()
+        val difference = getMoveDifference(pointToMove)
+        val tilePiece = getTilePiece(pointToMove)
+        val isCapture = (difference.x == 1 || difference.x == -1) && difference.y == dir
+
+        val enPassant = isValidEnPassant(pointToMove)
+
+        val isValidMove =
+            (difference.x == 0 && tilePiece == null && (difference.y == dir || (difference.y == 2 * dir && y == backrank)))
+                    || isCapture && (enPassant || (tilePiece != null && tilePiece.alliance != this.alliance))
+
+        return isValidMove && isInCheckAfterMove(pointToMove)
     }
 
     override fun getCoveredSquares(): Array<Point> {
@@ -113,7 +113,7 @@ class Pawn(x: Int, y: Int, alliance: Alliance, game: Game, board: Board) :
         val diff = Point(move.x - x, move.y - y)
         val captureePosition = Point(x + diff.x, y)
 
-        super.move(move)
+        super.makeMove(move)
 
         game.board.setPiece(captureePosition, null)
     }

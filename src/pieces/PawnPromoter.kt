@@ -17,15 +17,33 @@ class PawnPromoter(x: Int, y: Int, alliance: Alliance, private val game: Game) {
     private val dir = if (alliance == Alliance.WHITE) 1 else -1
 
     private val queenRect =
-        Rectangle(x * game.board.tileSize, (y + 0 * dir) * game.board.tileSize, game.board.tileSize, game.board.tileSize)
+        Rectangle(
+            x * game.board.tileSize,
+            (y + 0 * dir) * game.board.tileSize,
+            game.board.tileSize,
+            game.board.tileSize
+        )
     private val bishopRect =
-        Rectangle(x * game.board.tileSize, (y + 1 * dir) * game.board.tileSize, game.board.tileSize, game.board.tileSize)
+        Rectangle(
+            x * game.board.tileSize,
+            (y + 1 * dir) * game.board.tileSize,
+            game.board.tileSize,
+            game.board.tileSize
+        )
     private val knightRect =
-        Rectangle(x * game.board.tileSize, (y + 2 * dir) * game.board.tileSize, game.board.tileSize, game.board.tileSize)
+        Rectangle(
+            x * game.board.tileSize,
+            (y + 2 * dir) * game.board.tileSize,
+            game.board.tileSize,
+            game.board.tileSize
+        )
     private val rookRect =
-        Rectangle(x * game.board.tileSize, (y + 3 * dir) * game.board.tileSize, game.board.tileSize, game.board.tileSize)
-
-
+        Rectangle(
+            x * game.board.tileSize,
+            (y + 3 * dir) * game.board.tileSize,
+            game.board.tileSize,
+            game.board.tileSize
+        )
 
     enum class Promotion {
         Queen,
@@ -105,9 +123,7 @@ class PawnPromoter(x: Int, y: Int, alliance: Alliance, private val game: Game) {
             }
         }
 
-
         game.mouse.addEventListener(MouseEventType.Pressed, listener, removeAfterCall = false)
-
     }
 
     private fun show() {

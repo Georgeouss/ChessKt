@@ -33,37 +33,10 @@ abstract class Piece(
 
     private var image = loadImage("$imageName.png")
 
-    protected abstract fun isValidMove(move: Point): Boolean
-    private fun isValidMove(x: Int, y: Int): Boolean {
-        return isValidMove(Point(x, y))
-    }
+    protected abstract fun isValidMove(pointToMove: Point): Boolean
 
     public abstract fun getValidMoves(): Array<Point>
     public abstract fun getCoveredSquares(): Array<Point>
-
-    private fun getValidMovesCached(): Array<Point> {
-        return if (validMovesCache == null) {
-            validMovesCache = getValidMoves()
-            validMovesCache!!
-        } else {
-            validMovesCache!!
-        }
-    }
-
-    protected open fun move(move: Point) {
-        if (isValidMove(move)) {
-            val prev = Point(this.x, this.y)
-
-            game.board.setPiece(prev, null)
-            game.board.setPiece(move, this)
-
-            game.addMove(Move(prev.x, prev.y, move.x, move.y, this))
-        }
-    }
-
-    protected fun move(x: Int, y: Int) {
-        move(Point(x, y))
-    }
 
     protected open fun testMove(move: Point): () -> Unit {
         val prev = Point(this.x, this.y)
@@ -123,6 +96,15 @@ abstract class Piece(
         }
     }
 
+    private fun getValidMovesCached(): Array<Point> {
+        return if (validMovesCache == null) {
+            validMovesCache = getValidMoves()
+            validMovesCache!!
+        } else {
+            validMovesCache!!
+        }
+    }
+
     public fun tick() {
         val ts = game.board.tileSize
         val bounds = Rectangle(x * ts, y * ts, ts, ts)
@@ -141,7 +123,7 @@ abstract class Piece(
                         game.mouse.selected = null
 
                         if (game.turn == this.alliance)
-                            move(renderTile.x, renderTile.y)
+                            makeMove(Point(renderTile.x, renderTile.y))
 
                         renderX = x * ts
                         renderY = y * ts
@@ -162,20 +144,31 @@ abstract class Piece(
         }
     }
 
-    fun isMoveInBounds(move: Move): Boolean {
+    protected open fun makeMove(destination: Point) {
+        if (isValidMove(destination)) {
+            val prev = Point(this.x, this.y)
+
+            game.board.setPiece(prev, null)
+            game.board.setPiece(destination, this)
+
+            game.addMove(Move(prev.x, prev.y, destination.x, destination.y, this))
+        }
+    }
+
+    protected fun isMoveInBounds(point: Point): Boolean {
         return Rectangle(0, 0, BOARD_TILES_SIZE, BOARD_TILES_SIZE)
-            .contains(move.x, move.y)
+            .contains(point.x, point.y)
     }
 
-    fun getMoveDifference(move: Move): Point {
-        return Point(move.x - x, move.y - y)
+    protected fun getMoveDifference(point: Point): Point {
+        return Point(point.x - x, point.y - y)
     }
 
-    fun getTilePiece(move: Move) = game.board.getPiece(move.x, move.y)
+    protected fun getTilePiece(point: Point) = game.board.getPiece(point.x, point.y)
 
-    fun isInCheckAfterMove(move: Move): Boolean {
+    protected fun isInCheckAfterMove(point: Point): Boolean {
         val king = if (alliance == Alliance.WHITE) game.board.whiteKing else game.board.blackKing
-        val takeBack = this.testMove(move)
+        val takeBack = this.testMove(point)
         val result = king.inCheck()
         takeBack()
         return result
